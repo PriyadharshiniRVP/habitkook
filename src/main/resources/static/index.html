@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Habitkook - AI Habit Coach</title>
+</head>
+<body style="
+  margin:0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(180deg,#ffe4f5,#fff7fc);
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  min-height:100vh;
+">
+
+<div style="width:100%;max-width:420px;padding:16px;">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:16px;">
+        <h1 style="margin:0;color:#ff4f9a;">Habitkook</h1>
+        <p style="margin:4px 0 0;color:#aa4b73;font-size:14px;">
+            Soft, kind AI habit coach 💕
+        </p>
+    </div>
+
+    <!-- Log card -->
+    <div style="
+      background:#ffffffcc;
+      border-radius:18px;
+      padding:16px 18px;
+      box-shadow:0 10px 25px rgba(255,105,180,0.15);
+      margin-bottom:16px;
+    ">
+        <h2 style="margin:0 0 10px;font-size:16px;color:#ff4f9a;">Log today</h2>
+
+        <input id="habitInput" placeholder="Gym, journaling, DSA, skincare..."
+               style="
+               width:100%;
+               padding:10px 12px;
+               border-radius:12px;
+               border:1px solid #f7a8d9;
+               font-size:14px;
+               outline:none;
+             " />
+
+        <div style="margin:10px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;">
+            <span>Mood:</span>
+            <button type="button" data-mood="4"
+                    style="border-radius:999px;border:none;padding:4px 10px;font-size:12px;background:#ffe3f2;color:#aa4b73;cursor:pointer;">
+                4/10
+            </button>
+            <button type="button" data-mood="6"
+                    style="border-radius:999px;border:none;padding:4px 10px;font-size:12px;background:#ffe3f2;color:#aa4b73;cursor:pointer;">
+                6/10
+            </button>
+            <button type="button" data-mood="8"
+                    style="border-radius:999px;border:none;padding:4px 10px;font-size:12px;background:#ffe3f2;color:#aa4b73;cursor:pointer;">
+                8/10
+            </button>
+            <button type="button" data-mood="10"
+                    style="border-radius:999px;border:none;padding:4px 10px;font-size:12px;background:#ffe3f2;color:#aa4b73;cursor:pointer;">
+                10/10
+            </button>
+        </div>
+
+        <button id="logBtn" type="button"
+                style="
+                width:100%;
+                margin-top:8px;
+                padding:10px 0;
+                border-radius:999px;
+                border:none;
+                background:linear-gradient(90deg,#ff4f9a,#ff8fb3);
+                color:white;
+                font-weight:600;
+                cursor:pointer;
+                font-size:14px;
+              ">
+            Log habit ✅
+        </button>
+
+        <p id="logStatus" style="margin-top:8px;font-size:12px;color:#5c3053;"></p>
+    </div>
+
+    <!-- AI card -->
+    <div style="
+      background:#ffffffcc;
+      border-radius:18px;
+      padding:16px 18px;
+      box-shadow:0 10px 25px rgba(255,105,180,0.15);
+    ">
+        <h2 style="margin:0 0 10px;font-size:16px;color:#ff4f9a;">AI Coach</h2>
+        <p id="aiText" style="margin:0;font-size:14px;color:#5c3053;">
+            Log a habit to get a gentle nudge 💗
+        </p>
+    </div>
+
+</div>
+
+<script>
+    const USER_ID = 'user1';
+    let currentMood = 7;
+
+    // mood button click
+    document.querySelectorAll('[data-mood]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentMood = parseInt(btn.getAttribute('data-mood'));
+        document.querySelectorAll('[data-mood]').forEach(b => {
+          b.style.background = '#ffe3f2';
+          b.style.color = '#aa4b73';
+        });
+        btn.style.background = '#ff4f9a';
+        btn.style.color = '#ffffff';
+      });
+    });
+
+    async function logHabit() {
+      const input = document.getElementById('habitInput');
+      const name = input.value.trim();
+      const statusEl = document.getElementById('logStatus');
+      if (!name) {
+        statusEl.textContent = 'Please type a habit name.';
+        return;
+      }
+      statusEl.textContent = 'Saving...';
+
+      try {
+        const res = await fetch('/api/habits/log', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ name, userId: USER_ID, mood: currentMood })
+        });
+        const text = await res.text();
+        statusEl.textContent = text;
+        input.value = '';
+        fetchInsights();
+      } catch (e) {
+        statusEl.textContent = 'Error logging habit.';
+      }
+    }
+
+    async function fetchInsights() {
+      const aiText = document.getElementById('aiText');
+      aiText.textContent = 'Thinking about your patterns…';
+      try {
+        const res = await fetch('/api/habits/insights/' + USER_ID);
+        const text = await res.text();
+        aiText.textContent = text;
+      } catch (e) {
+        aiText.textContent = 'Could not load insights.';
+      }
+    }
+
+    document.getElementById('logBtn').addEventListener('click', logHabit);
+    // Load initial insights
+    fetchInsights();
+</script>
+</body>
+</html>
